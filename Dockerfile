@@ -34,3 +34,9 @@ USER $NB_USER
 # Atualiza o ambiente Conda
 WORKDIR /opt/install
 RUN test -f environment.yml && conda env update -n base --file environment.yml || echo "Arquivo environment.yml não encontrado, ignorando atualização."
+
+# Define o ambiente padrão para iniciar o XFCE ao lado do Jupyter
+ENV STARTUP_COMMAND "startxfce4 & jupyter lab --LabApp.default_url=/lab/tree/Desktop"
+
+# Inicia o ambiente gráfico e o JupyterLab
+CMD bash -c "$STARTUP_COMMAND"
