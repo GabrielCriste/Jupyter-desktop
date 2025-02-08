@@ -33,5 +33,4 @@ USER $NB_USER
 
 # Atualiza o ambiente Conda
 WORKDIR /opt/install
-RUN test -f environment.yml && conda env update -n base --file environment.yml || echo "Arquivo environment.yml não 
-encontrado, ignorando atualização."
+RUN test -f environment.yml && conda env update -n base --file environment.yml || echo "Arquivo environment.yml não encontrado, ignorando atualização."
