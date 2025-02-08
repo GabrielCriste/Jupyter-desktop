@@ -14,13 +14,11 @@ RUN apt-get update && apt-get install -y \
     wget \
     && apt-get clean
 
-# Remover light-locker antes da instalação para evitar conflitos
-RUN apt-get remove -y light-locker || true
-
 # Instalação do TurboVNC
 ARG TURBOVNC_VERSION=2.2.6
 RUN wget -q "https://sourceforge.net/projects/turbovnc/files/${TURBOVNC_VERSION}/turbovnc_${TURBOVNC_VERSION}_amd64.deb/download" -O turbovnc.deb && \
     apt-get install -y ./turbovnc.deb && \
+    apt-get remove -y light-locker && \
     rm turbovnc.deb && \
     ln -s /opt/TurboVNC/bin/* /usr/local/bin/
 
@@ -28,16 +26,12 @@ RUN wget -q "https://sourceforge.net/projects/turbovnc/files/${TURBOVNC_VERSION}
 RUN chown -R ${NB_UID}:${NB_GID} $HOME || true
 
 # Copia os arquivos de instalação
-COPY . /opt/install
+ADD . /opt/install
 RUN fix-permissions /opt/install || true
 
 USER $NB_USER
 
-# Atualiza o ambiente Conda, se o arquivo existir
+# Atualiza o ambiente Conda
 WORKDIR /opt/install
-RUN if [ -f environment.yml ]; then \
-        conda env update -n base --file environment.yml; \
-    else \
-        echo "Arquivo environment.yml não encontrado, ignorando atualização."; \
-    fi
-    
+RUN test -f environment.yml && conda env update -n base --file environment.yml || echo "Arquivo environment.yml não 
+encontrado, ignorando atualização."
