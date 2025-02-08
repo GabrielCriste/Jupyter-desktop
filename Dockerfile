@@ -1,10 +1,7 @@
-# Usando uma imagem base menor para otimizar o tamanho final
-FROM jupyter/minimal-notebook:python-3.7.6  
+FROM jupyter/base-notebook:python-3.10
 
-# Mudando para root para instalação de pacotes
-USER root  
+USER root
 
-# Atualiza pacotes e instala dependências essenciais
 RUN apt-get update && apt-get install -y \
     dbus-x11 \
     firefox \
@@ -14,30 +11,26 @@ RUN apt-get update && apt-get install -y \
     xfce4-settings \
     xorg \
     xubuntu-icon-theme \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    wget \
+    && apt-get clean
 
-# Definição da versão do TurboVNC
-ARG TURBOVNC_VERSION=2.2.6  
-
-# Instalando TurboVNC de forma mais confiável
+# Instalação do TurboVNC
+ARG TURBOVNC_VERSION=2.2.6
 RUN wget -q "https://sourceforge.net/projects/turbovnc/files/${TURBOVNC_VERSION}/turbovnc_${TURBOVNC_VERSION}_amd64.deb/download" -O turbovnc.deb && \
     apt-get install -y ./turbovnc.deb && \
     apt-get remove -y light-locker && \
-    rm -f turbovnc.deb && \
+    rm turbovnc.deb && \
     ln -s /opt/TurboVNC/bin/* /usr/local/bin/
 
-# Garantindo permissões corretas na pasta do usuário
-RUN chown -R $NB_UID:$NB_GID $HOME  
+# Ajuste de permissões
+RUN chown -R ${NB_UID}:${NB_GID} $HOME || true
 
-# Adicionando arquivos ao container
-ADD . /opt/install  
-RUN fix-permissions /opt/install  
+# Copia os arquivos de instalação
+ADD . /opt/install
+RUN fix-permissions /opt/install || true
 
-# Mudando para usuário não root
-USER $NB_USER  
+USER $NB_USER
 
-# Atualizando ambiente Conda sem cache para evitar conflitos
-RUN cd /opt/install && \
-    conda env update -n base --file environment.yml && \
-    conda clean --all -f -y
-
+# Atualiza o ambiente Conda
+WORKDIR /opt/install
+RUN test -f environment.yml && conda env update -n base --file environment.yml || echo "Arquivo environment.yml não encontrado, ignorando atualização."
